@@ -1,0 +1,2174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShotVault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #111214;
+  --surface:  #1a1c1f;
+  --surface2: #21242a;
+  --surface3: #292d34;
+  --border:   #2c3038;
+  --border2:  #383e48;
+  --text:     #dfe2e8;
+  --muted:    #6e7580;
+  --dim:      #404650;
+
+  --accent:        #3b82f6;
+  --accent2:       #60a5fa;
+  --accent-bg:     rgba(59,130,246,0.09);
+  --accent-border: rgba(59,130,246,0.25);
+
+  --amber:    #e8622a;
+  --nuke:     #e8bc00;
+  --green:    #34d399;
+  --green-bg: rgba(52,211,153,0.09);
+  --red:      #f87171;
+
+  --badge-blend-bg:    rgba(210,90,30,0.14);
+  --badge-blend-color: #e8622a;
+  --badge-blend-border:rgba(210,90,30,0.35);
+  --badge-nuke-bg:     rgba(230,185,0,0.13);
+  --badge-nuke-color:  #e8bc00;
+  --badge-nuke-border: rgba(230,185,0,0.35);
+  --badge-all-bg:      rgba(59,130,246,0.10);
+  --badge-all-color:   #60a5fa;
+  --badge-all-border:  rgba(59,130,246,0.25);
+
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --r:  6px;
+  --rl: 10px;
+}
+
+/* ── STATUS COLOR PALETTE ── */
+/* Animation */
+.s-waiting         { background: rgba(100,100,120,0.18); color: #888ca0; border-color: rgba(100,100,120,0.3); }
+.s-ready           { background: rgba(59,130,246,0.15);  color: #60a5fa; border-color: rgba(59,130,246,0.35); }
+.s-in_progress     { background: rgba(234,179,8,0.15);   color: #facc15; border-color: rgba(234,179,8,0.35); }
+.s-face_anim       { background: rgba(168,85,247,0.15);  color: #c084fc; border-color: rgba(168,85,247,0.35); }
+.s-blocking        { background: rgba(239,68,68,0.15);   color: #f87171; border-color: rgba(239,68,68,0.35); }
+.s-anim_completed  { background: rgba(52,211,153,0.15);  color: #34d399; border-color: rgba(52,211,153,0.35); }
+/* Render */
+.s-not_started     { background: rgba(100,100,120,0.18); color: #888ca0; border-color: rgba(100,100,120,0.3); }
+.s-render_ready    { background: rgba(59,130,246,0.15);  color: #60a5fa; border-color: rgba(59,130,246,0.35); }
+.s-partially       { background: rgba(234,179,8,0.15);   color: #facc15; border-color: rgba(234,179,8,0.35); }
+.s-rendered_cbb    { background: rgba(245,158,11,0.18);  color: #f59e0b; border-color: rgba(245,158,11,0.38); }
+.s-rendered        { background: rgba(52,211,153,0.15);  color: #34d399; border-color: rgba(52,211,153,0.35); }
+/* Comp */
+.s-waiting_renders { background: rgba(100,100,120,0.18); color: #888ca0; border-color: rgba(100,100,120,0.3); }
+.s-comp_ready      { background: rgba(59,130,246,0.15);  color: #60a5fa; border-color: rgba(59,130,246,0.35); }
+.s-comp_progress   { background: rgba(234,179,8,0.15);   color: #facc15; border-color: rgba(234,179,8,0.35); }
+.s-comp_completed  { background: rgba(52,211,153,0.15);  color: #34d399; border-color: rgba(52,211,153,0.35); }
+/* Finished */
+.s-final_progress  { background: rgba(100,100,120,0.18); color: #888ca0; border-color: rgba(100,100,120,0.3); }
+.s-revise          { background: rgba(239,68,68,0.15);   color: #f87171; border-color: rgba(239,68,68,0.35); }
+.s-final           { background: rgba(52,211,153,0.15);  color: #34d399; border-color: rgba(52,211,153,0.35); }
+
+html { font-size: 15px; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── HEADER ── */
+header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 22px; height: 52px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface); flex-shrink: 0;
+}
+.logo { font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.12em; flex-shrink: 0; display: flex; align-items: baseline; }
+.logo-shot { color: var(--accent2); }
+.logo-manager { color: var(--muted); font-weight: 400; }
+.divider { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; }
+
+.project-bar {
+  display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0;
+  cursor: pointer; padding: 6px 11px; border-radius: var(--r); transition: background 0.12s;
+}
+.project-bar:hover { background: var(--surface2); }
+.project-icon { color: var(--muted); flex-shrink: 0; }
+.project-path { font-family: var(--mono); font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-path.loaded { color: var(--text); }
+.project-caret { color: var(--dim); margin-left: 2px; flex-shrink: 0; }
+.header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.btn {
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  padding: 7px 14px; border-radius: var(--r);
+  border: 1px solid var(--border2); background: var(--surface2);
+  color: var(--text); cursor: pointer; transition: background 0.12s, border-color 0.12s;
+  white-space: nowrap; display: flex; align-items: center; gap: 6px;
+}
+.btn:hover { background: var(--surface3); }
+.btn.accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.accent:hover { background: var(--accent2); border-color: var(--accent2); }
+.icon-btn {
+  width: 32px; height: 32px; border-radius: var(--r);
+  border: 1px solid transparent; background: transparent;
+  color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s;
+}
+.icon-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border); }
+
+/* ── TOOLBAR ── */
+.toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 22px; border-bottom: 1px solid var(--border);
+  background: var(--surface); flex-shrink: 0; flex-wrap: nowrap; overflow-x: auto;
+}
+.stat-chips { display: flex; gap: 6px; flex-shrink: 0; }
+.search-wrap { position: relative; flex: 1; max-width: 320px; }
+.search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+input[type="search"] {
+  font-family: var(--sans); font-size: 14px; width: 100%;
+  padding: 7px 11px 7px 32px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); outline: none; transition: border-color 0.12s;
+}
+input[type="search"]:focus { border-color: var(--accent); }
+input[type="search"]::placeholder { color: var(--dim); }
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  width: 14px; height: 14px; cursor: pointer;
+  background: var(--accent);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cline x1='18' y1='6' x2='6' y2='18' stroke='white' stroke-width='2.5'/%3E%3Cline x1='6' y1='6' x2='18' y2='18' stroke='white' stroke-width='2.5'/%3E%3C/svg%3E") center/contain no-repeat;
+  border-radius: 50%;
+}
+
+.filter-group { display: flex; gap: 4px; }
+.filter-btn {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 5px 13px; border-radius: 99px; cursor: pointer;
+  border: 1px solid var(--border2); background: var(--surface2);
+  color: var(--muted); transition: all 0.12s; letter-spacing: 0.04em;
+}
+.filter-btn:hover { color: var(--text); background: var(--surface3); }
+.filter-btn.active-all   { background: var(--badge-all-bg);   color: var(--badge-all-color);   border-color: var(--badge-all-border); }
+.filter-btn.active-blend { background: var(--badge-blend-bg); color: var(--badge-blend-color); border-color: var(--badge-blend-border); }
+.filter-btn.active-nuke  { background: var(--badge-nuke-bg);  color: var(--badge-nuke-color);  border-color: var(--badge-nuke-border); }
+.filter-btn.active-null  { background: var(--surface3); color: var(--text); border-color: var(--muted); }
+
+/* Generate popup inputs */
+.gen-input {
+  font-family: var(--mono); font-size: 13px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); border-radius: var(--r);
+  padding: 7px 10px; outline: none; transition: border-color 0.12s;
+}
+.gen-input:focus { border-color: var(--accent); }
+.gen-input::placeholder { color: var(--dim); }
+
+.sort-select {
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  padding: 5px 10px; border-radius: var(--r);
+  border: 1px solid var(--border2); background: var(--surface2);
+  color: var(--muted); cursor: pointer; outline: none;
+  transition: border-color 0.12s, color 0.12s;
+}
+.sort-select:hover, .sort-select:focus { border-color: var(--accent); color: var(--text); }
+.sort-select option { background: var(--surface2); color: var(--text); }
+.chip {
+  font-family: var(--mono); font-size: 11px;
+  padding: 4px 10px; border-radius: 99px;
+  border: 1px solid var(--border); color: var(--muted); background: var(--surface2);
+}
+.chip b { color: var(--text); font-weight: 500; }
+
+.toolbar-right { display: flex; gap: 4px; margin-left: auto; }
+.view-btn {
+  width: 30px; height: 30px; border-radius: var(--r);
+  border: 1px solid transparent; background: transparent;
+  color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s;
+}
+.view-btn.active, .view-btn:hover { background: var(--surface3); color: var(--text); border-color: var(--border); }
+
+/* ── BODY ── */
+.body-wrap { display: flex; flex: 1; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 210px; flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto; padding: 12px 0 32px; scrollbar-gutter: stable;
+  position: relative;
+}
+.sidebar-title {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--dim); padding: 6px 18px;
+}
+.seq-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 18px; cursor: pointer; transition: background 0.1s;
+  font-size: 14px; color: var(--muted); border-left: 2px solid transparent;
+}
+.seq-item:hover { background: var(--surface2); color: var(--text); }
+.seq-item.active { color: var(--accent2); border-left-color: var(--accent); background: var(--accent-bg); }
+.seq-item-count { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-left: auto; }
+
+/* ── CONTENT ── */
+.content { flex: 1; overflow-y: auto; padding: 22px; scrollbar-gutter: stable; }
+
+/* ── WELCOME ── */
+.welcome {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 70vh; gap: 20px; text-align: center;
+}
+.welcome-icon {
+  width: 68px; height: 68px; border-radius: var(--rl);
+  background: var(--surface2); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center; color: var(--accent);
+}
+.welcome h2 { font-size: 19px; font-weight: 500; }
+.welcome p  { font-size: 14px; color: var(--muted); max-width: 380px; line-height: 1.7; }
+.tree-preview {
+  font-family: var(--mono); font-size: 12px; color: var(--muted);
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 16px 22px; text-align: left; line-height: 2.1;
+}
+.hl { color: var(--accent2); }
+.gl { color: var(--green); }
+
+/* ── SEQ GROUP ── */
+.seq-group { margin-bottom: 32px; }
+.seq-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.seq-tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  color: var(--muted); background: var(--surface2);
+  border: 1px solid var(--border2); border-radius: var(--r); padding: 2px 8px;
+}
+.seq-title { font-size: 15px; font-weight: 500; }
+.seq-meta  { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-left: auto; }
+
+/* ── GRID ── */
+.shot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 10px; }
+
+.shot-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--rl); padding: 14px 16px;
+  cursor: default; transition: border-color 0.12s, background 0.12s;
+  position: relative; overflow: hidden;
+}
+.shot-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--accent); opacity: 0; transition: opacity 0.15s;
+}
+.shot-card:hover { border-color: var(--border2); background: var(--surface2); }
+.shot-card:hover::before { opacity: 1; }
+/* Progress bar */
+.seq-progress { height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden;display:flex; }
+.seq-progress-seg { height:100%;transition:width 0.3s; }
+
+/* Card selection */
+.shot-card.selected { border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-bg); }
+.shot-card.selected:hover { border-color:var(--accent);background:var(--surface); }
+.list-row.selected  { border-color:var(--accent);background:var(--accent-bg); }
+.list-row.selected:hover { border-color:var(--accent);background:var(--accent-bg); }
+.shot-card.empty { border-style: dashed; opacity: 0.5; }
+.shot-card.empty:hover { opacity: 0.75; }
+
+.card-head { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+.shot-num  { font-family: var(--mono); font-size: 16px; font-weight: 500; flex: 1; }
+.foot-count { font-family: var(--mono); font-size: 11px; color: var(--muted); flex-shrink: 0; margin-left: auto; }
+
+.badge {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+  padding: 3px 9px; border-radius: 99px; flex-shrink: 0;
+}
+.badge-blend { background: var(--badge-blend-bg); color: var(--badge-blend-color); border: 1px solid var(--badge-blend-border); }
+.badge-nuke  { background: var(--badge-nuke-bg);  color: var(--badge-nuke-color);  border: 1px solid var(--badge-nuke-border); }
+.badge-mixed { background: var(--badge-all-bg);   color: var(--badge-all-color);   border: 1px solid var(--badge-all-border); }
+
+.file-list { display: flex; flex-direction: column; gap: 4px; }
+.file-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 9px; border-radius: var(--r);
+  border: 1px solid var(--border); background: var(--bg);
+  cursor: pointer; transition: all 0.1s; text-align: left; width: 100%;
+}
+.file-row:hover { border-color: var(--accent); background: var(--accent-bg); }
+.file-row:active { transform: scale(0.99); }
+.file-icon-blend { color: var(--amber); flex-shrink: 0; }
+.file-icon-nuke  { color: var(--nuke);  flex-shrink: 0; }
+.file-name { font-family: var(--mono); font-size: 12px; color: var(--muted); flex: 1; word-break: break-all; }
+.file-row:hover .file-name { color: var(--text); }
+.file-size   { font-family: var(--mono); font-size: 10px; color: var(--dim); flex-shrink: 0; }
+.launch-icon { color: var(--dim); flex-shrink: 0; transition: color 0.1s; }
+.file-row:hover .launch-icon { color: var(--accent2); }
+.more-files  { font-family: var(--mono); font-size: 11px; color: var(--dim); padding: 4px 9px; }
+
+/* foot-path removed — subpath no longer shown */
+
+/* ── COMPACT MODE ── */
+.shot-grid.compact { grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 10px; align-items: start; }
+
+.shot-card.compact-card {
+  padding: 10px 12px;
+  cursor: default;
+  align-self: start;
+  transition: min-height 0.25s ease, background 0.12s, border-color 0.12s;
+  min-height: 0;
+  overflow: hidden;
+}
+/* Compact: hide file list and status col — shown via JS on hover only */
+.shot-card.compact-card .file-list,
+.shot-card.compact-card .status-col { display: none; }
+.shot-card.compact-card .card-head { margin-bottom: 0; }
+
+/* Hover expand — animated via max-height transition */
+.shot-card.compact-card .file-list,
+.shot-card.compact-card .status-col { display: none; }
+.shot-card.compact-card .card-head { margin-bottom: 0; }
+
+.shot-card.compact-card.compact-expanded .file-list,
+.shot-card.compact-card.compact-expanded .status-col {
+  display: flex;
+  animation: expandIn 0.2s ease 0.05s both;
+}
+.shot-card.compact-card.compact-expanded .compact-dots { display: none; }
+.shot-card.compact-card.compact-expanded .card-head { margin-bottom: 10px; }
+@keyframes expandIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+
+/* Compact dots row */
+.compact-dots {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 8px;
+}
+.status-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  flex-shrink: 0;
+  transition: transform 0.12s, filter 0.12s;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.compact-head-extra { display: none; align-items: center; gap: 6px; margin-left: auto; }
+.shot-card.compact-card.compact-expanded .compact-head-extra { display: flex; }
+
+/* ── STATUS COLUMN (grid — vertical stack) ── */
+.status-col {
+  display: flex; flex-direction: column; gap: 5px;
+  margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border);
+}
+.status-row-item {
+  display: flex; align-items: center; gap: 8px;
+}
+.status-pill {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.03em;
+  padding: 3px 10px; border-radius: 99px; border: 1px solid;
+  cursor: pointer; transition: filter 0.12s, transform 0.1s;
+  white-space: nowrap; user-select: none;
+}
+.status-pill:hover { filter: brightness(1.2); }
+.status-pill:active { transform: scale(0.96); }
+.status-pill-label {
+  color: var(--muted); font-size: 12px; font-family: var(--sans);
+  width: 60px; flex-shrink: 0; text-align: right;
+}
+
+/* ── TOOLTIPS ── */
+#sv-tooltip {
+  position: fixed; z-index: 9999; pointer-events: none;
+  background: var(--surface3); color: var(--text);
+  font-family: var(--sans); font-size: 12px; font-weight: 400;
+  padding: 5px 10px; border-radius: 7px;
+  border: 1px solid var(--border2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  white-space: nowrap; display: none;
+  animation: tooltipIn 0.08s ease;
+}
+@keyframes tooltipIn { from { opacity:0; transform:translateY(-2px); } to { opacity:1; transform:none; } }
+.status-dropdown {
+  position: fixed; z-index: 500;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--rl); padding: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  min-width: 180px;
+  animation: dropIn 0.12s ease;
+}
+@keyframes dropIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+.dropdown-title {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+  padding: 4px 8px 6px;
+}
+.dropdown-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 9px; border-radius: var(--r);
+  cursor: pointer; transition: background 0.1s;
+  font-size: 13px; color: var(--text);
+}
+.dropdown-option:hover { background: var(--surface3); }
+.dropdown-option.hovered { background: var(--accent-bg); outline: 1px solid var(--accent); }
+.dropdown-option.selected { background: var(--accent-bg); }
+.dropdown-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── LIST VIEW ── */
+.shot-list { display: flex; flex-direction: column; gap: 4px; }
+
+/* Shot | Anim | Render | Comp | Finished | Launch */
+.list-header {
+  display: grid;
+  grid-template-columns: 160px 140px 150px 155px 120px 1fr 110px;
+  gap: 8px; padding: 5px 14px 7px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted);
+}
+.list-row {
+  display: grid;
+  grid-template-columns: 160px 140px 150px 155px 120px 1fr 110px;
+  gap: 8px; align-items: center;
+  padding: 11px 14px; border: 1px solid var(--border);
+  border-radius: var(--r); background: var(--surface);
+  transition: background 0.1s, border-color 0.1s;
+}
+.list-row:hover { background: var(--surface2); border-color: var(--border2); }
+.list-row.empty { opacity: 0.5; }
+.list-row.empty:hover { opacity: 0.75; }
+.list-note-input {
+  font-family: var(--sans); font-size: 12px;
+  background: transparent; border: none; border-bottom: 1px solid transparent;
+  color: var(--muted); width: 100%; outline: none;
+  transition: border-color 0.12s, color 0.12s;
+  cursor: text;
+}
+.list-note-input:focus { border-bottom-color: var(--border2); color: var(--text); }
+.list-note-input::placeholder { color: var(--dim); font-style: italic; }
+.list-launch-btn {
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  padding: 6px 12px; border-radius: var(--r);
+  border: 1px solid var(--border2); background: var(--surface2);
+  color: var(--muted); cursor: pointer; transition: all 0.12s;
+  display: flex; align-items: center; gap: 5px; white-space: nowrap;
+}
+.list-launch-btn:hover { background: var(--accent-bg); color: var(--accent2); border-color: var(--accent); }
+
+/* Status pill in list view */
+.list-status-pill {
+  font-family: var(--mono); font-size: 11px;
+  padding: 4px 10px; border-radius: 99px; border: 1px solid;
+  cursor: pointer; transition: filter 0.12s;
+  white-space: nowrap; user-select: none; display: inline-block;
+}
+.list-status-pill:hover { filter: brightness(1.2); }
+
+/* ── VERSIONS PILL ── */
+.versions-pill {
+  font-family: var(--mono); font-size: 10px;
+  padding: 3px 9px; border-radius: 99px;
+  background: var(--surface3); border: 1px solid var(--border2);
+  color: var(--muted); cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  white-space: nowrap; user-select: none; display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 4px;
+}
+.versions-pill:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+.versions-pill svg { transition: transform 0.15s; }
+.versions-pill.open svg { transform: rotate(180deg); }
+
+/* Versions dropdown (reuses .status-dropdown shape) */
+.versions-dropdown {
+  position: fixed; z-index: 500;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--rl); padding: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  min-width: 260px; max-height: 300px; overflow-y: auto;
+  animation: dropIn 0.12s ease;
+}
+.versions-dropdown-title {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--dim); padding: 4px 8px 6px;
+}
+.version-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 9px; border-radius: var(--r);
+  cursor: pointer; transition: background 0.1s; width: 100%;
+  border: none; background: none; text-align: left;
+}
+.version-option:hover { background: var(--surface3); }
+.version-option.latest { background: var(--accent-bg); }
+.version-option-name { font-family: var(--mono); font-size: 12px; color: var(--text); flex: 1; word-break: break-all; }
+.version-option-size { font-family: var(--mono); font-size: 10px; color: var(--dim); flex-shrink: 0; }
+.version-latest-tag {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em;
+  background: var(--accent-bg); color: var(--accent2);
+  border: 1px solid var(--accent-border); border-radius: 99px;
+  padding: 1px 6px; flex-shrink: 0;
+}
+
+/* ── SETTINGS PANEL ── */
+.panel-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+/* First-run setup panel variant */
+.setup-panel {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--rl); width: 560px; max-width: 90vw;
+  padding: 32px; animation: slideUp 0.2s ease;
+}
+.setup-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.setup-logo { font-family: var(--mono); font-size: 14px; font-weight: 500; letter-spacing: 0.1em; }
+.setup-logo-shot { color: var(--accent2); }
+.setup-logo-mgr  { color: var(--muted); font-weight: 400; }
+.setup-title { font-size: 18px; font-weight: 500; margin-bottom: 6px; }
+.setup-sub   { font-size: 13px; color: var(--muted); margin-bottom: 26px; line-height: 1.6; }
+.setup-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; }
+
+/* Clear folder button */
+.btn.danger { border-color: rgba(248,113,113,0.3); color: var(--red); }
+.btn.danger:hover { background: var(--red-bg, rgba(248,113,113,0.08)); border-color: var(--red); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.panel {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--rl); width: 540px; max-width: 90vw;
+  padding: 26px; animation: slideUp 0.18s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.panel-title { font-size: 17px; font-weight: 500; margin-bottom: 22px; }
+.form-group  { margin-bottom: 18px; }
+.form-label  { font-size: 13px; color: var(--muted); margin-bottom: 7px; display: block; }
+.form-row    { display: flex; gap: 8px; }
+input[type="text"] {
+  font-family: var(--mono); font-size: 13px; flex: 1;
+  padding: 9px 13px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--text); outline: none; transition: border-color 0.12s;
+}
+input[type="text"]:focus { border-color: var(--accent); }
+.form-hint   { font-size: 12px; color: var(--dim); margin-top: 6px; }
+.panel-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 26px; }
+
+/* Shortcuts */
+.shortcut-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 0; font-size: 12px; color: var(--muted);
+}
+.shortcut-row span { color: var(--muted); }
+kbd {
+  font-family: var(--mono); font-size: 10px;
+  padding: 2px 7px; border-radius: 4px;
+  background: var(--surface3); border: 1px solid var(--border2);
+  color: var(--text); white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── TOAST ── */
+.toast-area { position: fixed; bottom: 22px; right: 22px; display: flex; flex-direction: column; gap: 7px; z-index: 600; }
+.toast {
+  font-size: 14px; padding: 11px 17px; border-radius: var(--r);
+  background: var(--surface3); border: 1px solid var(--border2);
+  color: var(--text); animation: slideIn 0.18s ease; max-width: 360px; line-height: 1.4;
+}
+.toast.ok    { border-color: var(--green); }
+.toast.error { border-color: var(--red); color: var(--red); }
+.toast.info  { border-color: var(--accent); }
+@keyframes slideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+
+.scanning { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; color: var(--muted); font-size: 14px; }
+.spin { width: 26px; height: 26px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.no-results { text-align: center; padding: 60px 0; color: var(--muted); font-size: 14px; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; min-height: 40px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="/static/logo.png" alt="SHOTVAULT" style="height:22px;width:auto;display:block;cursor:pointer" onclick="openEasterEgg()">
+  </div>
+  <div class="divider" id="headerDivider" style="display:none"></div>
+  <div class="project-bar" id="projectBar" style="display:none">
+    <svg class="project-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    <span class="project-path" id="projectPath" onclick="browseFolder()" title="Click to change project folder" style="cursor:pointer">Click to open project folder…</span>
+    <svg class="project-caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" onclick="toggleRecentsDropdown(event)" style="cursor:pointer;flex-shrink:0" title="Recent projects"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="header-right" style="margin-left:auto">
+    <button class="btn danger" id="clearBtn" style="display:none" onclick="clearProject()" title="Clear project and return to start">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Clear
+    </button>
+    <button class="btn" id="rescanBtn" style="display:none" onclick="rescan()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Rescan
+    </button>
+    <button class="icon-btn" onclick="openSettings()" title="Settings (Ctrl+,)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- FIRST-RUN SETUP OVERLAY -->
+<div class="panel-overlay" id="setupOverlay" style="display:none">
+  <div class="setup-panel">
+    <div class="setup-title">Let's get set up</div>
+    <div class="setup-sub">Point ShotVault to your Blender and Nuke executables so it can launch files directly. You can always change these later in Settings.</div>
+    <div class="form-group">
+      <label class="form-label">Blender executable path</label>
+      <div class="form-row">
+        <input type="text" id="setupBlenderPath" placeholder="C:\Program Files\Blender Foundation\blender.exe">
+        <button class="btn" onclick="browseSetupBlender()">Browse…</button>
+      </div>
+      <div class="form-hint">Full path to blender.exe</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nuke executable path <span style="color:var(--dim)">(optional)</span></label>
+      <div class="form-row">
+        <input type="text" id="setupNukePath" placeholder="C:\Program Files\Nuke\Nuke.exe">
+        <button class="btn" onclick="browseSetupNuke()">Browse…</button>
+      </div>
+      <div class="form-hint">Full path to Nuke executable</div>
+    </div>
+    <div class="setup-footer">
+      <button class="btn" onclick="skipSetup()" style="color:var(--muted)">Skip for now</button>
+      <button class="btn accent" onclick="saveSetup()">Save &amp; continue</button>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar" id="toolbar" style="display:none">
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="search" id="searchInput" placeholder="Search shots, files… ( / )" oninput="applyFilters()">
+  </div>
+  <div class="filter-group">
+    <button class="filter-btn active-all" id="fAll"   onclick="setFilter('all')">.all</button>
+    <button class="filter-btn"            id="fBlend" onclick="setFilter('blend')">.blend</button>
+    <button class="filter-btn"            id="fNuke"  onclick="setFilter('nuke')">.nk</button>
+    <button class="filter-btn"            id="fNull"  onclick="setFilter('null')">.null</button>
+  </div>
+  <button class="filter-btn" id="hideEmptyBtn" onclick="toggleHideEmpty()">Hide empty</button>
+  <select class="sort-select" id="sortSelect" onchange="applyFilters()" title="Sort shots">
+    <option value="default">Sort: Default</option>
+    <option value="animation">Sort: Animation</option>
+    <option value="render">Sort: Render</option>
+    <option value="comp">Sort: Comp</option>
+    <option value="finished">Sort: Finished</option>
+  </select>
+  <div class="stat-chips">
+    <div class="chip"><b id="statSeq">0</b> seq</div>
+    <div class="chip"><b id="statShots">0</b> shots</div>
+    <div class="chip"><b id="statFiles">0</b> files</div>
+    <div class="chip"><b id="statSize">0 MB</b> total</div>
+  </div>
+  <div class="toolbar-right">
+    <button class="btn" id="openAllBtn" style="display:none;font-size:11px;padding:5px 10px" onclick="openAllCompact()">Open all</button>
+    <button class="btn" id="closeAllBtn" style="display:none;font-size:11px;padding:5px 10px" onclick="closeAllCompact()">Close all</button>
+    <div id="gridDivider" style="width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0;display:none"></div>
+    <button class="view-btn" id="dashBtn" title="Dashboard (D)" onclick="openDashboard()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="9" height="9"/><rect x="13" y="2" width="9" height="9"/><rect x="2" y="13" width="9" height="9"/><rect x="13" y="13" width="9" height="9"/></svg>
+    </button>
+    <div style="width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0"></div>
+    <button class="view-btn active" id="gridBtn" title="Grid (Tab)" onclick="setView('grid')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    </button>
+    <button class="view-btn" id="listBtn" title="List (Tab)" onclick="setView('list')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="body-wrap">
+  <div class="sidebar" id="sidebar" style="display:none">
+    <div class="sidebar-title">Sequences</div>
+    <div id="seqList"></div>
+    <div style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim)">ShotVault v1.0</div>
+  </div>
+  <div class="content" id="content">
+    <!-- welcome screen injected by welcomeHtml() on load -->
+  </div>
+</div>
+
+<div class="panel-overlay" id="settingsOverlay" style="display:none" onclick="closeSettings(event)">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="panel-title">Settings</div>
+    <div class="form-group">
+      <label class="form-label">Blender executable path</label>
+      <div class="form-row">
+        <input type="text" id="blenderPath" placeholder="C:\Program Files\Blender Foundation\blender.exe">
+        <button class="btn" onclick="browseBlender()">Browse…</button>
+      </div>
+      <div class="form-hint">Full path to blender.exe</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nuke executable path <span style="color:var(--dim)">(optional)</span></label>
+      <div class="form-row">
+        <input type="text" id="nukePath" placeholder="C:\Program Files\Nuke\Nuke.exe">
+        <button class="btn" onclick="browseNuke()">Browse…</button>
+      </div>
+      <div class="form-hint">Full path to Nuke executable</div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);margin:20px 0 18px;"></div>
+    <div class="form-label" style="margin-bottom:12px;font-size:13px;color:var(--muted)">Keyboard shortcuts</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;">
+      <div class="shortcut-row"><kbd>Tab</kbd><span>Toggle grid / list view</span></div>
+      <div class="shortcut-row"><kbd>C</kbd><span>Open all / close all cards</span></div>
+      <div class="shortcut-row"><kbd>D</kbd><span>Open dashboard</span></div>
+      <div class="shortcut-row"><kbd>1</kbd><span>Show all files</span></div>
+      <div class="shortcut-row"><kbd>2</kbd><span>Show .blend only</span></div>
+      <div class="shortcut-row"><kbd>3</kbd><span>Show .nk only</span></div>
+      <div class="shortcut-row"><kbd>4</kbd><span>Show empty shots only</span></div>
+      <div class="shortcut-row"><kbd>Shift</kbd><kbd>Click</kbd><span>Select shot for bulk edit</span></div>
+      <div class="shortcut-row"><kbd>Ctrl</kbd><kbd>A</kbd><span>Select all shots</span></div>
+      <div class="shortcut-row"><kbd>Ctrl</kbd><kbd>F</kbd><span>Focus search</span></div>
+      <div class="shortcut-row"><kbd>Ctrl</kbd><kbd>R</kbd><span>Rescan project</span></div>
+      <div class="shortcut-row"><kbd>Ctrl</kbd><kbd>O</kbd><span>Open project folder</span></div>
+      <div class="shortcut-row"><kbd>Ctrl</kbd><kbd>,</kbd><span>Open settings</span></div>
+    </div>
+
+    <div class="panel-footer">
+      <button class="btn" onclick="closeSettings()">Cancel</button>
+      <button class="btn accent" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="panel-overlay" id="generateOverlay" style="display:none" onclick="closeGeneratePopup(event)">
+  <div class="setup-panel" style="width:580px;max-width:95vw;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div style="margin-bottom:20px">
+      <div class="setup-title" style="margin:0">Generate Folder Structure</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <label class="form-label" style="margin:0;white-space:nowrap">Project name</label>
+      <input class="gen-input" id="genProject" placeholder="Root folder name" oninput="updateGeneratePreview()" style="flex:1">
+    </div>
+
+    <div style="border-top:1px solid var(--border);margin:0 0 16px"></div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <span class="form-label" style="margin:0">Sequences</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="icon-btn" onclick="changeSeqCount(-1)" style="width:24px;height:24px;font-size:14px">−</button>
+        <span contenteditable="true" id="genSeqCount"
+          style="font-family:var(--mono);font-size:14px;min-width:20px;text-align:center;outline:none;border-bottom:1px solid var(--border2)"
+          oninput="changeSeqCountDirect(this.textContent)"
+          onkeydown="if(event.key==='Enter')this.blur()">1</span>
+        <button class="icon-btn" onclick="changeSeqCount(1)" style="width:24px;height:24px;font-size:14px">+</button>
+      </div>
+    </div>
+
+    <div id="genSeqRows" style="display:flex;flex-direction:column;gap:8px"></div>
+
+    <button class="btn" style="margin-top:10px;font-size:12px" onclick="changeSeqCount(1)">+ Add sequence</button>
+
+    <div style="border-top:1px solid var(--border);margin:20px 0"></div>
+
+    <div class="form-label" style="margin-bottom:8px">Preview</div>
+    <div id="genPreview" style="font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;line-height:1.8;white-space:pre"></div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+      <button class="btn" onclick="closeGeneratePopup()">Cancel</button>
+      <button class="btn accent" onclick="generateStructure()">Generate →</button>
+    </div>
+  </div>
+</div>
+
+<div class="panel-overlay" id="dashOverlay" style="display:none" onclick="closeDashboard(event)">
+  <div class="setup-panel" style="width:640px;max-width:95vw;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <div class="setup-title" style="margin:0">Project Overview</div>
+      <button class="btn" onclick="closeDashboard()">Close</button>
+    </div>
+    <div id="dashContent"></div>
+  </div>
+</div>
+
+<!-- Bulk action bar -->
+<div id="bulkBar" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rl);padding:10px 16px;box-shadow:0 8px 32px rgba(0,0,0,.5);align-items:center;gap:12px;z-index:500">
+  <span id="bulkCount" style="font-family:var(--mono);font-size:12px;color:var(--text)">0 selected</span>
+  <div style="width:1px;height:16px;background:var(--border)"></div>
+  <button class="btn" onclick="clearSelection()" style="font-size:11px;padding:4px 10px">Clear</button>
+</div>
+
+<div id="easterEgg" style="display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.6);align-items:center;justify-content:center" onclick="closeEasterEgg()">
+  <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rl);padding:40px 52px;text-align:center;box-shadow:0 16px 64px rgba(0,0,0,.6);animation:dropIn .15s ease" onclick="event.stopPropagation()">
+    <div style="font-size:36px;margin-bottom:16px">🎉</div>
+    <div style="font-size:18px;font-weight:500;color:var(--text);margin-bottom:6px">You are <span style="color:var(--accent)">AWESOME</span> for using ShotVault</div>
+    <div style="font-size:13px;color:var(--dim)">😉</div>
+  </div>
+</div>
+
+<div id="sv-tooltip"></div>
+<div id="easterEggOverlay" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.6);align-items:center;justify-content:center" onclick="closeEasterEgg()">
+  <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rl);padding:40px 48px;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.6);animation:dropIn .18s ease" onclick="event.stopPropagation()">
+    <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:10px">You are AWESOME for using ShotVault</div>
+    <div style="font-size:15px;color:var(--muted)">Go get that work done!</div>
+  </div>
+</div>
+
+<div class="toast-area" id="toastArea"></div>
+
+<script>
+// ── STATUS DEFINITIONS ────────────────────────────────
+const STATUS_FIELDS = {
+  animation: {
+    label: 'Anim',
+    options: [
+      { value: 'waiting',        label: 'Waiting to start', cls: 's-waiting' },
+      { value: 'ready',          label: 'Ready to start',   cls: 's-ready' },
+      { value: 'blocking',       label: 'Blocking',         cls: 's-blocking' },
+      { value: 'in_progress',    label: 'In progress',      cls: 's-in_progress' },
+      { value: 'face_anim',      label: 'Face anim',        cls: 's-face_anim' },
+      { value: 'anim_completed', label: 'Completed',        cls: 's-anim_completed' },
+    ]
+  },
+  render: {
+    label: 'Render',
+    options: [
+      { value: 'not_started',  label: 'Waiting to start', cls: 's-not_started' },
+      { value: 'render_ready', label: 'Ready to start', cls: 's-render_ready' },
+      { value: 'partially',    label: 'Partially',     cls: 's-partially' },
+      { value: 'rendered_cbb', label: 'Rendered CBB',  cls: 's-rendered_cbb' },
+      { value: 'rendered',     label: 'Rendered',      cls: 's-rendered' },
+    ]
+  },
+  comp: {
+    label: 'Comp',
+    options: [
+      { value: 'waiting_renders', label: 'Waiting to start', cls: 's-waiting_renders' },
+      { value: 'comp_ready',      label: 'Ready to start',   cls: 's-comp_ready' },
+      { value: 'comp_progress',   label: 'In progress',         cls: 's-comp_progress' },
+      { value: 'comp_completed',  label: 'Completed',           cls: 's-comp_completed' },
+    ]
+  },
+  finished: {
+    label: 'Finished',
+    options: [
+      { value: 'final_progress', label: 'In progress', cls: 's-final_progress' },
+      { value: 'revise',         label: 'Revise',      cls: 's-revise' },
+      { value: 'final',          label: 'Final',       cls: 's-final' },
+    ]
+  }
+};
+
+const STATUS_DEFAULTS = {
+  animation: 'waiting',
+  render:    'not_started',
+  comp:      'waiting_renders',
+  finished:  'final_progress',
+};
+
+function statusInfo(field, value) {
+  const opts = STATUS_FIELDS[field]?.options || [];
+  return opts.find(o => o.value === value) || opts[0];
+}
+
+function shotKey(seq, shot) { return `${seq}/${shot}`; }
+
+function getStatus(seq, shot, field) {
+  const k = shotKey(seq, shot);
+  return (statusData[k] && statusData[k][field]) || STATUS_DEFAULTS[field];
+}
+
+// ── STATE ─────────────────────────────────────────────
+let allData      = [];
+let filteredData = [];
+let statusData   = {};   // { "seq/shot": { animation, render, comp, finished } }
+let currentView  = 'grid';
+let activeSeq    = null;
+let currentRoot  = '';
+let activeFilter = 'all';
+let compactMode  = true;
+let activeDropdown = null;
+let _recentRoots = [];
+
+const BACKUP_EXTS = /\.blend\d+$/i;
+
+// Inject welcome screen immediately so content area isn't blank
+// ── CUSTOM TOOLTIPS ───────────────────────────────────────────────────────────
+(function() {
+  const tip = document.getElementById('sv-tooltip');
+  if (!tip) return;
+  let _timer = null;
+
+  // On first hover, permanently strip title and store in data-tip
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest('[title]');
+    if (el) {
+      el.setAttribute('data-tip', el.getAttribute('title'));
+      el.removeAttribute('title');
+    }
+    const tipped = e.target.closest('[data-tip]');
+    if (!tipped) return;
+    clearTimeout(_timer);
+    _timer = setTimeout(() => {
+      tip.textContent = tipped.getAttribute('data-tip');
+      tip.style.display = 'block';
+    }, 100);
+  });
+
+  document.addEventListener('mouseout', e => {
+    if (!e.target.closest('[data-tip]')) return;
+    clearTimeout(_timer);
+    tip.style.display = 'none';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (tip.style.display === 'none') return;
+    let x = e.clientX + 12, y = e.clientY + 16;
+    if (x + tip.offsetWidth + 4 > window.innerWidth) x = e.clientX - tip.offsetWidth - 12;
+    if (y + tip.offsetHeight + 4 > window.innerHeight) y = e.clientY - tip.offsetHeight - 8;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  });
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('content').innerHTML = welcomeHtml(_username);
+});
+
+// ── INIT ──────────────────────────────────────────────
+let _username = '';
+
+async function init() {
+  const [cfg, who] = await Promise.all([api('/api/config'), api('/api/whoami')]);
+  _username = who.name || '';
+  _recentRoots = cfg.recent_roots || [];
+  if (cfg.blender_path) document.getElementById('blenderPath').value = cfg.blender_path;
+  if (cfg.nuke_path)    document.getElementById('nukePath').value    = cfg.nuke_path;
+
+  document.getElementById('content').innerHTML = welcomeHtml(_username);
+
+  if (!cfg.blender_path && !cfg.nuke_path && !cfg._setup_seen) {
+    document.getElementById('setupOverlay').style.display = 'flex';
+  }
+
+  if (cfg.last_root) {
+    currentRoot = cfg.last_root;
+    document.getElementById('projectPath').textContent = cfg.last_root;
+    document.getElementById('projectPath').classList.add('loaded');
+    await scan(cfg.last_root);
+  }
+}
+
+// ── CLEAR PROJECT ─────────────────────────────────────
+async function clearProject() {
+  currentRoot = '';
+  allData = []; filteredData = [];
+  document.getElementById('projectPath').textContent = 'Click to open project folder…';
+  document.getElementById('projectPath').classList.remove('loaded');
+  document.getElementById('toolbar').style.display      = 'none';
+  document.getElementById('sidebar').style.display      = 'none';
+  document.getElementById('rescanBtn').style.display    = 'none';
+  document.getElementById('clearBtn').style.display     = 'none';
+  document.getElementById('projectBar').style.display   = 'none';
+  document.getElementById('headerDivider').style.display = 'none';
+  document.getElementById('content').innerHTML = welcomeHtml(_username);
+  await api('/api/config', { last_root: '' }, 'POST');
+}
+
+function welcomeHtml(username) {
+  const greeting = username ? `Welcome, ${username} :)` : `Welcome :)`;
+  const recentsHtml = _recentRoots.length ? `
+    <div style="margin-top:28px;width:100%;max-width:480px">
+      <div style="font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px">Recent projects</div>
+      ${_recentRoots.map((r, i) => {
+        const name = r.replace(/\\/g, '/').split('/').filter(Boolean).pop();
+        return `<div onclick="openRecent(${i})" title="${esc(r)}" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);margin-bottom:5px;cursor:pointer;transition:border-color 0.12s,background 0.12s"
+          onmouseenter="this.style.borderColor='var(--border2)';this.style.background='var(--surface2)'"
+          onmouseleave="this.style.borderColor='var(--border)';this.style.background='var(--surface)'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted);flex-shrink:0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">${esc(name)}</span>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+  return `<div class="welcome">
+    <h2>${greeting}</h2>
+    <p>Pick your project root below, or generate one. ShotVault will scan for .blend and .nk files organized by sequence and shot.</p>
+    <div class="tree-preview">
+      <div><span class="hl">project_root/</span></div>
+      <div>&nbsp;&nbsp;shots/</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl">010/</span> &nbsp;<span style="color:var(--dim)">← sequence</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl">0010/</span> &nbsp;<span style="color:var(--dim)">← shot</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;work/cg/</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="gl">scene_v001.blend</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl">020/</span> &nbsp;<span class="hl">030/</span> …</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <button class="btn accent" style="padding:10px 26px;font-size:14px;width:220px;justify-content:center" onclick="browseFolder()">Choose root folder</button>
+      <button class="btn" style="padding:8px 22px;font-size:13px;width:220px;border:1.5px solid var(--accent);color:var(--accent);background:transparent;display:flex;align-items:center;justify-content:center;gap:8px" onclick="openGeneratePopup()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Generate
+      </button>
+    </div>
+    ${recentsHtml}
+    <p style="font-size:12px;color:var(--dim);letter-spacing:0.03em;margin-top:32px">Vibe-coded in Claude by Crow</p>
+  </div>`;
+}
+
+async function openRecent(idx) {
+  const root = _recentRoots[idx];
+  if (!root) return;
+  // Hide any visible tooltip
+  const tip = document.getElementById('sv-tooltip');
+  if (tip) tip.style.display = 'none';
+  currentRoot = root;
+  document.getElementById('projectPath').textContent = root;
+  document.getElementById('projectPath').classList.add('loaded');
+  await scan(root);
+}
+
+function toggleRecentsDropdown(e) {
+  e.stopPropagation();
+  closeDropdown();
+  if (!_recentRoots.length) return;
+
+  const trigger = document.getElementById('projectBar');
+  const rect = trigger.getBoundingClientRect();
+
+  const el = document.createElement('div');
+  el.className = 'versions-dropdown';
+  el.style.minWidth = '320px';
+  el.innerHTML = `
+    <div class="versions-dropdown-title">Recent projects</div>
+    ${_recentRoots.map((r, i) => `
+      <button class="version-option" onclick="openRecent(${i});closeDropdown()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted);flex-shrink:0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span class="version-option-name" style="font-size:12px;color:var(--text)">${esc(r)}</span>
+      </button>`).join('')}
+  `;
+
+  document.body.appendChild(el);
+  let top  = rect.bottom + 6;
+  let left = rect.left;
+  if (left + 330 > window.innerWidth) left = window.innerWidth - 338;
+  el.style.top = top + 'px'; el.style.left = left + 'px';
+
+  const cleanup = () => { el.remove(); activeDropdown = null; };
+  activeDropdown = { el, cleanup };
+  setTimeout(() => document.addEventListener('click', cleanup, { once: true }), 0);
+}
+
+// ── FIRST-RUN SETUP ───────────────────────────────────
+async function browseSetupBlender() {
+  const r = await api('/api/browse_file');
+  if (r.path) document.getElementById('setupBlenderPath').value = r.path;
+}
+async function browseSetupNuke() {
+  const r = await api('/api/browse_file');
+  if (r.path) document.getElementById('setupNukePath').value = r.path;
+}
+async function saveSetup() {
+  const blender_path = document.getElementById('setupBlenderPath').value.trim();
+  const nuke_path    = document.getElementById('setupNukePath').value.trim();
+  await api('/api/config', { blender_path, nuke_path, _setup_seen: true }, 'POST');
+  // Sync to settings panel too
+  if (blender_path) document.getElementById('blenderPath').value = blender_path;
+  if (nuke_path)    document.getElementById('nukePath').value    = nuke_path;
+  document.getElementById('setupOverlay').style.display = 'none';
+  if (blender_path) toast('Blender path saved', 'ok');
+}
+async function skipSetup() {
+  await api('/api/config', { _setup_seen: true }, 'POST');
+  document.getElementById('setupOverlay').style.display = 'none';
+}
+
+// ── FOLDER ────────────────────────────────────────────
+async function browseFolder() {
+  const res = await api('/api/browse_folder');
+  if (res.error || !res.path) return;
+  currentRoot = res.path;
+  document.getElementById('projectPath').textContent = res.path;
+  document.getElementById('projectPath').classList.add('loaded');
+  await scan(res.path);
+}
+async function rescan() { if (currentRoot) await scan(currentRoot); }
+
+// ── AUTO-RESCAN ON FILE CHANGES ───────────────────────────────────────────────
+setInterval(async () => {
+  if (!currentRoot) return;
+  const r = await api('/api/rescan_pending');
+  if (r?.pending) {
+    toast('Files changed — rescanning…', 'ok');
+    await scan(currentRoot);
+  }
+}, 3000);
+
+function openEasterEgg() {
+  const el = document.getElementById('easterEggOverlay');
+  el.style.display = 'flex';
+}
+function closeEasterEgg() {
+  document.getElementById('easterEggOverlay').style.display = 'none';
+}
+
+// ── UNDO / REDO ───────────────────────────────────────────────────────────────
+const UNDO_LIMIT = 50;
+let _undoStack = [];
+let _redoStack = [];
+
+function _pushUndo(entries) {
+  _undoStack.push(entries);
+  if (_undoStack.length > UNDO_LIMIT) _undoStack.shift();
+  _redoStack = []; // new action clears redo
+}
+
+async function undoStatus() {
+  if (!_undoStack.length) return;
+  const entries = _undoStack.pop();
+  const redoEntries = [];
+  for (const {seq, shot, field, prev, next} of entries) {
+    redoEntries.push({seq, shot, field, prev: next, next: prev});
+    await _applyStatus(seq, shot, field, prev);
+  }
+  _redoStack.push(redoEntries);
+  toast('Undone', 'ok');
+}
+
+async function redoStatus() {
+  if (!_redoStack.length) return;
+  const entries = _redoStack.pop();
+  const undoEntries = [];
+  for (const {seq, shot, field, prev, next} of entries) {
+    undoEntries.push({seq, shot, field, prev: next, next: prev});
+    await _applyStatus(seq, shot, field, next);
+  }
+  _undoStack.push(undoEntries);
+  toast('Redone', 'ok');
+}
+
+async function _applyStatus(seq, shot, field, value) {
+  const key = shotKey(seq, shot);
+  if (!statusData[key]) statusData[key] = { ...STATUS_DEFAULTS };
+  statusData[key][field] = value;
+  _patchStatusDOM(seq, shot, field, value);
+  await api('/api/status', { key, field, value }, 'POST');
+}
+
+function _patchStatusDOM(seq, shot, field, value) {
+  const info = statusInfo(field, value);
+  const cardEl = document.getElementById(`card_${seq}_${shot}`);
+  if (cardEl) {
+    const fieldOrder = ['animation','render','comp','finished'];
+    cardEl.querySelectorAll('.status-row-item').forEach((row, i) => {
+      if (fieldOrder[i] === field) {
+        const pill = row.querySelector('.status-pill');
+        if (pill) { pill.className = `status-pill ${info.cls}`; pill.textContent = info.label; pill.onclick = (e) => openStatusDropdown(e, seq, shot, field); }
+      }
+    });
+    const colorMap = {'s-waiting':'#888ca0','s-ready':'#60a5fa','s-in_progress':'#facc15','s-blocking':'#f87171','s-face_anim':'#c084fc','s-anim_completed':'#34d399','s-not_started':'#888ca0','s-render_ready':'#60a5fa','s-partially':'#facc15','s-rendered_cbb':'#f59e0b','s-rendered':'#34d399','s-waiting_renders':'#888ca0','s-comp_ready':'#60a5fa','s-comp_progress':'#facc15','s-comp_completed':'#34d399','s-final_progress':'#888ca0','s-revise':'#f87171','s-final':'#34d399'};
+    const dots = cardEl.querySelectorAll('.status-dot');
+    ['animation','render','comp','finished'].forEach((f, i) => {
+      const inf = statusInfo(f, getStatus(seq, shot, f));
+      if (dots[i]) { dots[i].style.background = colorMap[inf.cls] || '#888ca0'; dots[i].setAttribute('data-tip', `${STATUS_FIELDS[f].label}: ${inf.label}`); }
+    });
+  }
+  const rowEl = document.getElementById(`row_${seq}_${shot}`);
+  if (rowEl) {
+    const colIdx = ['animation','render','comp','finished'].indexOf(field);
+    if (colIdx !== -1) {
+      const cols = rowEl.querySelectorAll('.list-status-pill');
+      if (cols[colIdx]) { cols[colIdx].className = `list-status-pill ${info.cls}`; cols[colIdx].textContent = info.label; cols[colIdx].onclick = (e) => openStatusDropdown(e, seq, shot, field); }
+    }
+  }
+}
+let _selectedShots = new Map(); // "seq|shot" -> {seq, shot}
+
+// Click anywhere on content to clear selection
+document.addEventListener('click', (e) => {
+  if (!_selectedShots.size) return;
+  if (e.shiftKey) return;
+  if (e.target.closest('#bulkBar, .status-pill, .list-status-pill, .status-dot, .status-dropdown, .dropdown-option')) return;
+  clearSelection();
+});
+
+function toggleShotSelection(seq, shot, el) {
+  const key = `${seq}|${shot}`;
+  if (_selectedShots.has(key)) {
+    _selectedShots.delete(key);
+    el.classList.remove('selected');
+  } else {
+    _selectedShots.set(key, {seq, shot});
+    el.classList.add('selected');
+  }
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulkBar');
+  const countEl = document.getElementById('bulkCount');
+  if (_selectedShots.size > 0) {
+    bar.style.display = 'flex';
+    countEl.textContent = `${_selectedShots.size} shot${_selectedShots.size !== 1 ? 's' : ''} selected`;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function clearSelection() {
+  _selectedShots.clear();
+  document.querySelectorAll('.shot-card.selected, .list-row.selected').forEach(el => el.classList.remove('selected'));
+  updateBulkBar();
+}
+
+async function bulkSetStatus(field, value) {
+  if (!value || !_selectedShots.size) return;
+  for (const {seq, shot} of _selectedShots.values()) {
+    await setStatus(null, seq, shot, field, value);
+  }
+  toast(`Updated ${_selectedShots.size} shots`, 'ok');
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function openEasterEgg()  { document.getElementById('easterEggOverlay').style.display = 'flex'; }
+function closeEasterEgg() { document.getElementById('easterEggOverlay').style.display = 'none'; }
+
+function openDashboard() {
+  const overlay = document.getElementById('dashOverlay');
+  overlay.style.display = 'flex';
+  renderDashboard();
+}
+
+function closeDashboard(e) {
+  if (e && e.target !== document.getElementById('dashOverlay')) return;
+  document.getElementById('dashOverlay').style.display = 'none';
+}
+
+function renderDashboard() {  const fields = ['animation','render','comp','finished'];
+  const allShots = allData.flatMap(seq => seq.shots.map(s => ({...s, _seq: seq.seq})));
+  const total = allShots.length;
+  if (!total) { document.getElementById('dashContent').innerHTML = '<p style="color:var(--muted)">No shots loaded.</p>'; return; }
+
+  // Status color map
+  const colorMap = {
+    's-waiting':'#888ca0','s-ready':'#60a5fa','s-in_progress':'#facc15','s-face_anim':'#c084fc','s-blocking':'#f87171','s-anim_completed':'#34d399',
+    's-not_started':'#888ca0','s-render_ready':'#60a5fa','s-partially':'#facc15','s-rendered_cbb':'#f59e0b','s-rendered':'#34d399',
+    's-waiting_renders':'#888ca0','s-comp_ready':'#60a5fa','s-comp_progress':'#facc15','s-comp_completed':'#34d399',
+    's-final_progress':'#888ca0','s-revise':'#f87171','s-final':'#34d399'
+  };
+
+  // Overall finished bar
+  const finishedCounts = {};
+  STATUS_FIELDS['finished'].options.forEach(o => finishedCounts[o.value] = 0);
+  allShots.forEach(s => { const v = getStatus(s._seq, s.shot, 'finished'); finishedCounts[v] = (finishedCounts[v]||0)+1; });
+  const finishedBar = STATUS_FIELDS['finished'].options.map(o => {
+    const pct = (finishedCounts[o.value]||0) / total * 100;
+    return `<div style="height:100%;width:${pct}%;background:${colorMap[o.cls]};transition:width 0.4s" title="${o.label}: ${finishedCounts[o.value]||0}"></div>`;
+  }).join('');
+
+  // Per-field breakdown
+  const fieldBreakdowns = fields.map(field => {
+    const counts = {};
+    STATUS_FIELDS[field].options.forEach(o => counts[o.value] = 0);
+    allShots.forEach(s => { const v = getStatus(s._seq, s.shot, field); counts[v] = (counts[v]||0)+1; });
+    const bar = STATUS_FIELDS[field].options.map(o => {
+      const pct = (counts[o.value]||0) / total * 100;
+      return `<div style="height:100%;width:${pct}%;background:${colorMap[o.cls]}" title="${o.label}: ${counts[o.value]||0}"></div>`;
+    }).join('');
+    const legend = STATUS_FIELDS[field].options.filter(o => counts[o.value] > 0).map(o =>
+      `<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
+        <span style="width:8px;height:8px;border-radius:50%;background:${colorMap[o.cls]};flex-shrink:0"></span>
+        ${o.label} <b style="color:var(--text)">${counts[o.value]}</b>
+      </span>`
+    ).join('');
+    return `<div style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <span class="form-label" style="margin:0">${STATUS_FIELDS[field].label}</span>
+        <span style="font-size:11px;color:var(--dim)">${total} shots</span>
+      </div>
+      <div style="height:12px;border-radius:6px;overflow:hidden;display:flex;background:var(--border)">${bar}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">${legend}</div>
+    </div>`;
+  }).join('');
+
+  // Per-sequence progress
+  const seqRows = allData.map(seq => {
+    const shots = seq.shots;
+    const done  = shots.filter(s => getStatus(seq.seq, s.shot, 'finished') === 'final').length;
+    const pct   = shots.length ? done/shots.length*100 : 0;
+    return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span style="font-family:var(--mono);font-size:12px;color:var(--muted);min-width:50px">${esc(seq.seq)}</span>
+      <div style="flex:1;height:8px;border-radius:4px;overflow:hidden;background:var(--border)">
+        <div style="height:100%;width:${pct}%;background:#34d399;transition:width 0.4s"></div>
+      </div>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--dim);min-width:50px;text-align:right">${done}/${shots.length} final</span>
+    </div>`;
+  }).join('');
+
+  const donePct = (finishedCounts['final']||0)/total*100;
+  document.getElementById('dashContent').innerHTML = `
+    <div style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+        <span class="form-label" style="margin:0;font-size:14px">Overall completion</span>
+        <span style="font-family:var(--mono);font-size:18px;color:var(--text)">${donePct.toFixed(0)}%</span>
+      </div>
+      <div style="height:16px;border-radius:8px;overflow:hidden;display:flex;background:var(--border)">${finishedBar}</div>
+      <div style="font-size:11px;color:var(--dim);margin-top:6px">${finishedCounts['final']||0} of ${total} shots final</div>
+    </div>
+    <div style="border-top:1px solid var(--border);margin-bottom:20px;padding-top:20px">${fieldBreakdowns}</div>
+    <div style="border-top:1px solid var(--border);padding-top:20px">
+      <div class="form-label" style="margin-bottom:14px">Per sequence</div>
+      ${seqRows}
+    </div>`;
+}
+
+// ── SCAN ──────────────────────────────────────────────
+async function scan(root) {
+  showScanning();
+  document.getElementById('rescanBtn').style.display = 'none';
+  const data = await api('/api/scan', { root });
+  if (data.error) { toast(data.error, 'error'); showWelcome(); return; }
+
+  // Load status from project root (scan sets _current_root on server first)
+  statusData = await api('/api/status');
+
+  // Update recent roots in memory so they show immediately next visit
+  _recentRoots = [root, ..._recentRoots.filter(r => r !== root)].slice(0, 8);
+
+  allData = data.sequences.map(seq => {
+    const shots = seq.shots.map(s => {
+      const files = s.files.filter(f => !BACKUP_EXTS.test(f.name));
+      return { ...s, files };
+    });
+    return { ...seq, shots, shot_count: shots.length, file_count: shots.reduce((n,s)=>n+s.files.length,0) };
+  }).filter(seq => seq.shots.length > 0);
+
+  document.getElementById('toolbar').style.display     = '';
+  document.getElementById('sidebar').style.display     = '';
+  document.getElementById('rescanBtn').style.display   = '';
+  document.getElementById('clearBtn').style.display    = '';
+  document.getElementById('projectBar').style.display  = '';
+  document.getElementById('headerDivider').style.display = '';
+  applyFilters();
+  const totalFiles = allData.reduce((n,s)=>n+s.file_count,0);
+  toast(`Found ${allData.reduce((n,s)=>n+s.shot_count,0)} shots · ${totalFiles} files`, 'ok');
+}
+
+// ── FILTER ────────────────────────────────────────────
+function setFilter(type) {
+  activeFilter = type;
+  document.getElementById('fAll').className   = 'filter-btn' + (type==='all'   ? ' active-all'   : '');
+  document.getElementById('fBlend').className = 'filter-btn' + (type==='blend' ? ' active-blend' : '');
+  document.getElementById('fNuke').className  = 'filter-btn' + (type==='nuke'  ? ' active-nuke'  : '');
+  document.getElementById('fNull').className  = 'filter-btn' + (type==='null'  ? ' active-null'  : '');
+  applyFilters();
+}
+
+// Status sort order — lower index = more work remaining (floats to top)
+let hideEmpty = false;
+
+function toggleHideEmpty() {
+  hideEmpty = !hideEmpty;
+  document.getElementById('hideEmptyBtn').className = 'filter-btn' + (hideEmpty ? ' active-null' : '');
+  applyFilters();
+}
+
+const STATUS_ORDER = {
+  animation: ['waiting','ready','in_progress','face_anim','anim_completed'],
+  render:    ['not_started','render_ready','partially','rendered_cbb','rendered'],
+  comp:      ['waiting_renders','comp_ready','comp_progress','comp_completed'],
+  finished:  ['final_progress','revise','final'],
+};
+
+function applyFilters() {
+  const q      = document.getElementById('searchInput').value.toLowerCase().trim();
+  const sortBy = document.getElementById('sortSelect')?.value || 'default';
+
+  filteredData = allData.map(seq => {
+    let shots = seq.shots;
+    if (hideEmpty) shots = shots.filter(s => s.files.length > 0);
+    if (activeFilter === 'null') {
+      shots = shots.filter(s => s.files.length === 0);
+    } else if (activeFilter !== 'all') {
+      shots = shots.map(s => {
+        const files = s.files.filter(f => {
+          if (activeFilter === 'blend') return f.name.endsWith('.blend');
+          if (activeFilter === 'nuke')  return f.name.endsWith('.nk') || f.name.endsWith('.nknc');
+          return true;
+        });
+        return { ...s, files };
+      }).filter(s => s.files.length > 0);
+    }
+    if (q) shots = shots.filter(s => s.shot.toLowerCase().includes(q) || s.files.some(f=>f.name.toLowerCase().includes(q)));
+    if (!shots.length) return null;
+    return { ...seq, shots, shot_count: shots.length, file_count: shots.reduce((n,s)=>n+s.files.length,0) };
+  }).filter(Boolean);
+
+  // If sorting, flatten all shots into one pseudo-sequence
+  if (sortBy !== 'default') {
+    const order = STATUS_ORDER[sortBy] || [];
+    const allShots = filteredData.flatMap(seq => seq.shots.map(s => ({ ...s, _seq: seq.seq })));
+    allShots.sort((a, b) => {
+      const av = getStatus(a._seq, a.shot, sortBy);
+      const bv = getStatus(b._seq, b.shot, sortBy);
+      return order.indexOf(av) - order.indexOf(bv);
+    });
+    // Group into a single virtual sequence labelled with the sort field
+    const label = STATUS_FIELDS[sortBy]?.label || sortBy;
+    filteredData = [{
+      seq: `Sorted by ${label}`,
+      shots: allShots,
+      shot_count: allShots.length,
+      file_count: allShots.reduce((n,s)=>n+s.files.length,0),
+      _sorted: true,
+    }];
+  }
+
+  updateStats({ sequences: filteredData, total_shots: filteredData.reduce((n,s)=>n+s.shot_count,0), total_files: filteredData.reduce((n,s)=>n+s.file_count,0) });
+  buildSidebar();
+  renderAll(filteredData);
+}
+
+// ── SIDEBAR ───────────────────────────────────────────
+function buildSidebar() {
+  document.getElementById('seqList').innerHTML = filteredData.map(seq => `
+    <div class="seq-item ${activeSeq===seq.seq?'active':''}" onclick="scrollToSeq('${esc(seq.seq)}')">
+      <span>${esc(seq.seq)}</span>
+    </div>`).join('');
+}
+
+function scrollToSeq(seq) {
+  activeSeq = seq; buildSidebar();
+  const content = document.getElementById('content');
+  const el = document.getElementById('seq_'+seq);
+  if (el && content) content.scrollTo({ top: el.offsetTop - content.offsetTop - 14, behavior: 'smooth' });
+}
+
+// ── RENDER ────────────────────────────────────────────
+function renderAll(data) {
+  const content = document.getElementById('content');
+  if (!data.length) { content.innerHTML = '<div class="no-results">No shots match your current filter.</div>'; return; }
+  content.innerHTML = data.map(renderSeqGroup).join('');
+  if (currentView === 'grid') { attachCompactHover(); updateCompactBtns(); }
+}
+
+function renderSeqGroup(seq) {
+  const seqPath = (!seq._sorted && seq.shots[0]?.path) ? seq.shots[0].path.split(/[\\/]/).slice(0,-1).join('/') : '';
+
+  const shotsHtml = currentView === 'grid'
+    ? `<div class="shot-grid compact">${seq.shots.map(s=>renderCard(s._seq||seq.seq, s)).join('')}</div>`
+    : `<div class="shot-list">
+        <div class="list-header">
+          <span>Shot</span><span>Anim</span><span>Render</span><span>Comp</span><span>Finished</span><span>Notes</span><span>Launch</span>
+        </div>
+        ${seq.shots.map(s=>renderListRow(s._seq||seq.seq, s)).join('')}
+       </div>`;
+  return `<div class="seq-group" id="seq_${esc(seq.seq)}">
+    <div class="seq-header">
+      <span class="seq-tag">${seq._sorted ? '↕' : 'SQ'}</span>
+      <span class="seq-title">${esc(seq.seq)}</span>
+      <span class="seq-meta"></span>
+      ${seqPath ? `<button class="btn" style="padding:4px 10px;font-size:11px;margin-left:8px" onclick="openFolder('${esc(seqPath)}')" title="Open sequence folder">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Open folder
+      </button>` : ''}
+    </div>
+    ${shotsHtml}</div>`;
+}
+
+// ── STATUS PILL HTML ──────────────────────────────────
+function pillHtml(seq, shot, field, listMode) {
+  const val  = getStatus(seq, shot, field);
+  const info = statusInfo(field, val);
+  const pd = `onpointerdown="statusPillPointerDown(event,'${esc(seq)}','${esc(shot)}','${field}')"`;
+  const pu = `onpointerup="statusPillPointerUp(event,'${esc(seq)}','${esc(shot)}','${field}')"`;
+  const pc = `onpointercancel="statusPillPointerCancel()"`;
+  if (listMode) {
+    return `<span class="list-status-pill ${info.cls}" ${pd} ${pu} ${pc}>${esc(info.label)}</span>`;
+  }
+  return `<div class="status-row-item">
+    <span class="status-pill-label">${STATUS_FIELDS[field].label}</span>
+    <span class="status-pill ${info.cls}" ${pd} ${pu} ${pc}>${esc(info.label)}</span>
+  </div>`;
+}
+
+// ── CARD ──────────────────────────────────────────────
+function fileTypeOf(f) {
+  if (!f||!f.name) return 'other';
+  if (f.name.endsWith('.blend')) return 'blend';
+  if (f.name.endsWith('.nk')||f.name.endsWith('.nknc')) return 'nuke';
+  return 'other';
+}
+function badgeClass(shot) {
+  const types=[...new Set(shot.files.map(fileTypeOf))];
+  if(types.length>1) return 'badge badge-mixed';
+  if(types[0]==='blend') return 'badge badge-blend';
+  if(types[0]==='nuke')  return 'badge badge-nuke';
+  return 'badge badge-mixed';
+}
+function badgeLabel(shot) {
+  const types=[...new Set(shot.files.map(fileTypeOf))];
+  if(types.length>1) return 'mixed';
+  if(types[0]==='blend') return '.blend';
+  if(types[0]==='nuke')  return '.nk';
+  return 'files';
+}
+
+function renderCard(seq, shot) {
+  // Separate by type, sort by name descending so latest (highest version) is first
+  const blendFiles = shot.files.filter(f=>fileTypeOf(f)==='blend').sort((a,b)=>b.name.localeCompare(a.name));
+  const nukeFiles  = shot.files.filter(f=>fileTypeOf(f)==='nuke').sort((a,b)=>b.name.localeCompare(a.name));
+  const otherFiles = shot.files.filter(f=>fileTypeOf(f)==='other');
+
+  // Shown files: latest of each type
+  const shownFiles = [];
+  if (blendFiles.length) shownFiles.push({ file: blendFiles[0], all: blendFiles, type: 'blend' });
+  if (nukeFiles.length)  shownFiles.push({ file: nukeFiles[0],  all: nukeFiles,  type: 'nuke' });
+
+  const cardId = `card_${esc(seq)}_${esc(shot.shot)}`;
+
+  const filesHtml = shownFiles.map(({ file: f, all, type: ft }) => {
+    const hiddenCount = all.length - 1;
+    const versionsBtn = hiddenCount > 0
+      ? `<button class="versions-pill" id="vpill_${esc(seq)}_${esc(shot.shot)}_${ft}"
+           onclick="openVersionsDropdown(event,'${esc(seq)}','${esc(shot.shot)}','${ft}')"
+           title="${hiddenCount} older version${hiddenCount!==1?'s':''}">
+           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+           ${hiddenCount} older version${hiddenCount!==1?'s':''}
+         </button>`
+      : '';
+    return `<div>
+      <button class="file-row" onclick="launch('${esc(f.path)}','${ft}')" title="${esc(f.path)}">
+        <svg class="file-icon-${ft==='nuke'?'nuke':'blend'}" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+        <span class="file-name">${esc(f.name)}</span>
+        <svg class="launch-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </button>
+      ${versionsBtn}
+    </div>`;
+  }).join('');
+
+  const totalMb  = (shot.files.reduce((n,f)=>n+f.size_kb,0) / 1024).toFixed(1);
+  const totalVer = shot.files.length;
+
+  const statusColHtml = `<div class="status-col">
+    ${pillHtml(seq, shot.shot, 'animation', false)}
+    ${pillHtml(seq, shot.shot, 'render',    false)}
+    ${pillHtml(seq, shot.shot, 'comp',      false)}
+    ${pillHtml(seq, shot.shot, 'finished',  false)}
+  </div>`;
+
+  // Compact dots — one per status field in same order as the col
+  const fieldOrder = ['animation','render','comp','finished'];
+  const dotsHtml = `<div class="compact-dots">
+    ${fieldOrder.map(field => {
+      const val  = getStatus(seq, shot.shot, field);
+      const info = statusInfo(field, val);
+      // Extract the CSS color from the class — use inline style matching the class color
+      const colorMap = {
+        's-waiting':'#888ca0','s-ready':'#60a5fa','s-in_progress':'#facc15',
+        's-face_anim':'#c084fc','s-blocking':'#f87171','s-anim_completed':'#34d399',
+        's-not_started':'#888ca0','s-render_ready':'#60a5fa','s-partially':'#facc15',
+        's-rendered_cbb':'#f59e0b','s-rendered':'#34d399',
+        's-waiting_renders':'#888ca0','s-comp_ready':'#60a5fa','s-comp_progress':'#facc15','s-comp_completed':'#34d399',
+        's-final_progress':'#888ca0','s-revise':'#f87171','s-final':'#34d399'
+      };
+      const color = colorMap[info.cls] || '#888ca0';
+      return `<span class="status-dot" style="background:${color}"
+        title="${STATUS_FIELDS[field].label}: ${info.label}"
+        onclick="toggleStatusDropdown(event,'${esc(seq)}','${esc(shot.shot)}','${field}')"></span>`;
+    }).join('')}
+  </div>`;
+
+  const isEmpty = shot.files.length === 0;
+  const shotPath = shot.path.split(/[/\\]/).join('/');
+  return `<div class="shot-card compact-card${isEmpty?' empty':''}" id="${cardId}"
+>
+    <div class="card-head">
+      <span class="shot-num">${esc(shot.shot)}${shot._seq ? `<span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:6px">${esc(shot._seq)}</span>` : ''}</span>
+      ${isEmpty
+        ? `<span style="font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400;margin-left:auto;font-style:italic">no files</span>`
+        : `<span class="foot-count">${totalVer} file${totalVer!==1?'s':''} · ${totalMb} MB</span>
+      <span class="${badgeClass(shot)}" style="margin-left:auto">${badgeLabel(shot)}</span>`}
+    </div>
+    ${dotsHtml}
+    ${isEmpty ? '' : `<div class="file-list">${filesHtml}</div>`}
+    ${statusColHtml}
+  </div>`;
+}
+
+function renderListRow(seq, shot) {
+  const isEmpty  = shot.files.length === 0;
+  const fileCount = shot.files.length;
+  const shotPath = shot.path.split(/[/\\]/).join('/');
+  const key      = shotKey(seq, shot.shot);
+  const note     = statusData[key]?.note || '';
+  const fileLabel = isEmpty
+    ? `<span style="color:var(--muted);font-size:11px;font-style:italic;font-weight:400;margin-left:8px">no files</span>`
+    : `<span style="color:var(--dim);font-size:11px;font-family:var(--mono);margin-left:8px">${fileCount} file${fileCount!==1?'s':''}</span>`;
+  return `<div class="list-row${isEmpty?' empty':''}" id="row_${esc(seq)}_${esc(shot.shot)}"
+    onclick="if(event.shiftKey){event.stopPropagation();toggleShotSelection('${esc(seq)}','${esc(shot.shot)}',this)}">
+    <span class="list-shot">${esc(shot.shot)}${fileLabel}</span>
+    <span>${pillHtml(seq, shot.shot, 'animation', true)}</span>
+    <span>${pillHtml(seq, shot.shot, 'render',    true)}</span>
+    <span>${pillHtml(seq, shot.shot, 'comp',      true)}</span>
+    <span>${pillHtml(seq, shot.shot, 'finished',  true)}</span>
+    <span><input class="list-note-input" placeholder="Add note…" value="${esc(note)}"
+      onclick="event.stopPropagation()"
+      onchange="saveNote('${esc(seq)}','${esc(shot.shot)}',this.value)"></span>
+    <span style="display:flex;justify-content:flex-end">${isEmpty ? '' : `<button class="list-launch-btn" onclick="openListLaunchDropdown(event,'${esc(seq)}','${esc(shot.shot)}')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Launch
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>`}
+    </span>
+  </div>`;
+}
+
+// ── STATUS DROPDOWN ───────────────────────────────────
+function selectAllShots() {
+  filteredData.forEach(seq => {
+    seq.shots.forEach(s => {
+      const seq_ = s._seq || seq.seq;
+      const key  = `${seq_}|${s.shot}`;
+      if (!_selectedShots.has(key)) {
+        _selectedShots.set(key, {seq: seq_, shot: s.shot});
+        const cardEl = document.getElementById(`card_${seq_}_${s.shot}`);
+        const rowEl  = document.getElementById(`row_${seq_}_${s.shot}`);
+        if (cardEl) cardEl.classList.add('selected');
+        if (rowEl)  rowEl.classList.add('selected');
+      }
+    });
+  });
+  updateBulkBar();
+}
+
+// ── COMPACT CARD HOVER (JS-based so neighbours don't expand) ─────────────────
+// ── GENERATE FOLDER STRUCTURE ─────────────────────────────────────────────────
+let _genSeqs = [];
+
+function openGeneratePopup() {
+  _genSeqs = [{ seqName: 'sq', shotName: 'sh', count: 5 }];
+  document.getElementById('genProject').value = '';
+  renderGenRows();
+  updateGeneratePreview();
+  document.getElementById('generateOverlay').style.display = 'flex';
+}
+
+function closeGeneratePopup(e) {
+  if (e && e.target !== document.getElementById('generateOverlay')) return;
+  document.getElementById('generateOverlay').style.display = 'none';
+  // Don't let generate popup Escape trigger any content area re-render
+}
+
+function changeSeqCount(delta) {
+  const newCount = Math.max(1, _genSeqs.length + delta);
+  while (_genSeqs.length < newCount) {
+    const last = _genSeqs[_genSeqs.length - 1];
+    _genSeqs.push({ ...last });
+  }
+  while (_genSeqs.length > newCount) _genSeqs.pop();
+  renderGenRows();
+  updateGeneratePreview();
+}
+
+function changeSeqCountDirect(val) {
+  const n = Math.max(1, parseInt(val) || 1);
+  while (_genSeqs.length < n) { const last = _genSeqs[_genSeqs.length-1]; _genSeqs.push({...last}); }
+  while (_genSeqs.length > n) _genSeqs.pop();
+  updateGeneratePreview();
+}
+
+function removeGenSeq(i) {
+  _genSeqs.splice(i, 1);
+  if (_genSeqs.length === 0) _genSeqs.push({ seqName: 'sq', shotName: 'sh', count: 5 });
+  renderGenRows();
+  updateGeneratePreview();
+}
+
+function renderGenRows() {
+  const el = document.getElementById('genSeqCount');
+  if (el) el.textContent = _genSeqs.length;
+  document.getElementById('genSeqRows').innerHTML = _genSeqs.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)">
+      <span style="font-family:var(--mono);font-size:12px;color:var(--muted);min-width:16px;text-align:right">${i+1}</span>
+      <label style="font-size:11px;color:var(--muted)">Seq</label>
+      <input class="gen-input" style="width:72px" placeholder="name" value="${esc(s.seqName)}"
+        oninput="_genSeqs[${i}].seqName=this.value;updateGeneratePreview()">
+      <label style="font-size:11px;color:var(--muted)">Shot</label>
+      <input class="gen-input" style="width:72px" placeholder="name" value="${esc(s.shotName)}"
+        oninput="_genSeqs[${i}].shotName=this.value;updateGeneratePreview()">
+      <label style="font-size:11px;color:var(--muted)">Shots</label>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="icon-btn" onclick="changeRowCount(${i},-1)" style="width:24px;height:24px;font-size:14px">−</button>
+        <span contenteditable="true" id="rowCount_${i}"
+          style="font-family:var(--mono);font-size:14px;min-width:20px;text-align:center;outline:none;border-bottom:1px solid var(--border2)"
+          oninput="changeRowCountDirect(${i},this.textContent)"
+          onkeydown="if(event.key==='Enter')this.blur()">${s.count}</span>
+        <button class="icon-btn" onclick="changeRowCount(${i},1)" style="width:24px;height:24px;font-size:14px">+</button>
+      </div>
+      <button class="icon-btn" onclick="removeGenSeq(${i})" style="margin-left:auto;color:var(--dim)" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function changeRowCount(i, delta) {
+  _genSeqs[i].count = Math.max(1, (_genSeqs[i].count || 1) + delta);
+  const el = document.getElementById(`rowCount_${i}`);
+  if (el) el.textContent = _genSeqs[i].count;
+  updateGeneratePreview();
+}
+
+function changeRowCountDirect(i, val) {
+  const n = Math.max(1, parseInt(val) || 1);
+  _genSeqs[i].count = n;
+  updateGeneratePreview();
+}
+
+function updateGeneratePreview() {
+  const proj = (document.getElementById('genProject').value.trim() || 'project').toLowerCase();
+  let lines = [`${proj}/`];
+  lines.push(`  shots/`);
+  lines.push(`    common/plates/  common/comp/scripts/  common/cg/`);
+  _genSeqs.forEach((s, i) => {
+    const seqNum = String((i+1)*10).padStart(3,'0');
+    const seqFolder = s.seqName.trim() ? `${s.seqName.trim().toLowerCase()}${seqNum}` : seqNum;
+    const shotNum = (j) => String((j+1)*10).padStart(3,'0');
+    const shotName = (j) => s.shotName.trim() ? `${s.shotName.trim().toLowerCase()}${shotNum(j)}` : shotNum(j);
+    const shots = Array.from({length: s.count}, (_, j) => shotName(j));
+    lines.push(`    ${seqFolder}/`);
+    lines.push(`      common/plates/`);
+    lines.push(`      ${shots.slice(0,3).join('  ')}${shots.length > 3 ? `  … ${shots[shots.length-1]}` : ''}`);
+  });
+  lines.push(`  assets/`);
+  lines.push(`    chr/  env/  models/textures/  textures/`);
+  lines.push(`  edit/`);
+  lines.push(`    audio/  picture/`);
+  document.getElementById('genPreview').textContent = lines.join('\n');
+}
+
+async function generateStructure() {
+  const project = document.getElementById('genProject').value.trim();
+  if (!project) { toast('Enter a project code first', 'error'); return; }
+
+  const pathRes = await api('/api/browse_folder');
+  if (!pathRes.path) return;
+
+  const sequences = _genSeqs.map((s, i) => ({
+    seqName:  s.seqName  || 'sq',
+    shotName: s.shotName || 'sh',
+    count:    s.count,
+    seqIdx:   i + 1,
+  }));
+
+  const res = await api('/api/generate_structure', { path: pathRes.path, project, sequences }, 'POST');
+  if (res.error) { toast('Error: ' + res.error, 'error'); return; }
+
+  toast('Folder structure generated!', 'success');
+  document.getElementById('generateOverlay').style.display = 'none';
+
+  // Offer to open the new project
+  currentRoot = res.root;
+  document.getElementById('projectPath').textContent = res.root;
+  document.getElementById('projectPath').classList.add('loaded');
+  await scan(res.root);
+}
+
+
+
+function attachCompactHover() {
+  document.querySelectorAll('.compact-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.file-row, .status-pill, .list-status-pill, .versions-pill, .status-dot, .file-list, .status-col')) return;
+      if (e.shiftKey) {
+        const id = card.id; // card_SEQ_SHOT — find seq from data
+        const withoutPrefix = id.replace(/^card_/, '');
+        // Find matching shot in filteredData
+        for (const seq of filteredData) {
+          for (const s of seq.shots) {
+            const cid = `card_${esc(s._seq||seq.seq)}_${esc(s.shot)}`;
+            if (cid === id) { toggleShotSelection(s._seq||seq.seq, s.shot, card); return; }
+          }
+        }
+        return;
+      }
+      card.classList.toggle('compact-expanded');
+      updateCompactBtns();
+    });
+  });
+}
+
+function openAllCompact() {
+  document.querySelectorAll('.compact-card').forEach(c => c.classList.add('compact-expanded'));
+  updateCompactBtns();
+}
+
+function closeAllCompact() {
+  document.querySelectorAll('.compact-card').forEach(c => c.classList.remove('compact-expanded'));
+  updateCompactBtns();
+}
+
+function updateCompactBtns() {
+  const openBtn  = document.getElementById('openAllBtn');
+  const closeBtn = document.getElementById('closeAllBtn');
+  const divider  = document.getElementById('gridDivider');
+  if (!openBtn) return;
+  const inGrid = currentView === 'grid';
+  const cards  = document.querySelectorAll('.compact-card');
+  const show   = inGrid && cards.length > 0;
+  openBtn.style.display  = show ? '' : 'none';
+  closeBtn.style.display = show ? '' : 'none';
+  if (divider) divider.style.display = show ? '' : 'none';
+}
+
+// ── STATUS PILL — click to toggle dropdown, hold to drag-select ───────────────
+let _holdTimer = null;
+let _holdMode  = false;
+
+function statusPillPointerDown(event, seq, shot, field) {
+  event.stopPropagation();
+  _holdMode = false;
+
+  _holdTimer = setTimeout(() => {
+    _holdMode = true;
+    // Open dropdown in hold mode
+    _openStatusDropdownInternal(event, seq, shot, field);
+    const el = activeDropdown?.el;
+    if (!el) return;
+    // Highlight options on hover while held
+    el.querySelectorAll('.dropdown-option').forEach(opt => {
+      opt.addEventListener('mouseenter', () => {
+        el.querySelectorAll('.dropdown-option').forEach(o => o.classList.remove('hovered'));
+        opt.classList.add('hovered');
+      });
+    });
+  }, 400);
+}
+
+function statusPillPointerUp(event, seq, shot, field) {
+  if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; }
+
+  if (_holdMode) {
+    // Release in hold mode — select hovered option
+    _holdMode = false;
+    const el = activeDropdown?.el;
+    if (el) {
+      const hovered = el.querySelector('.dropdown-option.hovered');
+      if (hovered) hovered.click();
+      else closeDropdown();
+    }
+    return;
+  }
+
+  // Normal click — toggle dropdown
+  if (activeDropdown) {
+    closeDropdown();
+  } else {
+    _openStatusDropdownInternal(event, seq, shot, field);
+  }
+}
+
+function statusPillPointerCancel() {
+  if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; }
+  _holdMode = false;
+}
+
+function openStatusDropdown(event, seq, shot, field) {
+  event.stopPropagation();
+  _openStatusDropdownInternal(event, seq, shot, field);
+}
+
+function toggleStatusDropdown(event, seq, shot, field) {
+  event.stopPropagation();
+  if (activeDropdown) { closeDropdown(); return; }
+  _openStatusDropdownInternal(event, seq, shot, field);
+}
+
+function _openStatusDropdownInternal(event, seq, shot, field) {
+  closeDropdown();
+
+  const trigger = event.currentTarget;
+  const rect    = trigger.getBoundingClientRect();
+  const opts    = STATUS_FIELDS[field].options;
+  const current = getStatus(seq, shot, field);
+
+  const el = document.createElement('div');
+  el.className = 'status-dropdown';
+  el.innerHTML = `
+    <div class="dropdown-title">${STATUS_FIELDS[field].label}</div>
+    ${opts.map(o => `
+      <div class="dropdown-option ${o.value===current?'selected':''}"
+           onclick="closeDropdown();setStatus(event,'${esc(seq)}','${esc(shot)}','${field}','${o.value}')">
+        <span class="dropdown-dot ${o.cls}" style="background:currentColor;border:none;padding:0;border-radius:50%;width:8px;height:8px;"></span>
+        ${esc(o.label)}
+      </div>`).join('')}
+  `;
+
+  document.body.appendChild(el);
+
+  // Position — prefer below, flip up if off-screen
+  let top  = rect.bottom + 6;
+  let left = rect.left;
+  if (top + 220 > window.innerHeight) top = rect.top - el.offsetHeight - 6;
+  if (left + 200 > window.innerWidth)  left = window.innerWidth - 210;
+  el.style.top  = top  + 'px';
+  el.style.left = left + 'px';
+
+  const cleanup = () => { el.remove(); activeDropdown = null; };
+  activeDropdown = { el, cleanup };
+
+  // Close on outside pointerdown — fires before pointerup so no conflict with pill toggle
+  setTimeout(() => {
+    const outsideClose = (e) => {
+      if (e.target.closest('.status-dot, .status-pill, .list-status-pill, .dropdown-option, .dropdown-title')) return;
+      if (!el.contains(e.target)) { cleanup(); document.removeEventListener('pointerdown', outsideClose); }
+    };
+    document.addEventListener('pointerdown', outsideClose);
+    activeDropdown.outsideClose = outsideClose;
+  }, 0);
+}
+
+function closeDropdown() {
+  if (activeDropdown) {
+    if (activeDropdown.outsideClose) document.removeEventListener('pointerdown', activeDropdown.outsideClose);
+    activeDropdown.cleanup();
+    activeDropdown = null;
+  }
+}
+
+// ── VERSIONS DROPDOWN ─────────────────────────────────
+function openVersionsDropdown(event, seq, shotName, fileType) {
+  event.stopPropagation();
+  closeDropdown();
+
+  // Find the shot data
+  const seqData  = filteredData.find(s=>s.seq===seq);
+  const shotData = seqData?.shots.find(s=>s.shot===shotName);
+  if (!shotData) return;
+
+  const files = shotData.files
+    .filter(f=>fileTypeOf(f)===fileType)
+    .sort((a,b)=>b.name.localeCompare(a.name));
+
+  const trigger = event.currentTarget;
+  trigger.classList.add('open');
+  const rect = trigger.getBoundingClientRect();
+
+  const el = document.createElement('div');
+  el.className = 'versions-dropdown';
+  el.innerHTML = `
+    <div class="versions-dropdown-title" style="font-size:12px;color:var(--muted);padding:6px 10px 8px">${fileType === 'nuke' ? 'Nuke' : 'Blend'} versions — ${files.length} files</div>
+    ${files.map((f) => {
+      const iconColor = fileType==='nuke' ? 'var(--nuke)' : 'var(--amber)';
+      return `<button class="version-option" onclick="launch('${esc(f.path)}','${fileType}');closeDropdown()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" style="flex-shrink:0"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+        <span class="version-option-name">${esc(f.name)}</span>
+        <span class="version-option-size">${(f.size_kb/1024).toFixed(1)} MB</span>
+      </button>`;
+    }).join('')}
+  `;
+
+  document.body.appendChild(el);
+
+  let top  = rect.bottom + 6;
+  let left = rect.left;
+  if (top + 320 > window.innerHeight) top = rect.top - Math.min(el.scrollHeight, 320) - 6;
+  if (left + 280 > window.innerWidth)  left = window.innerWidth - 288;
+  el.style.top  = top  + 'px';
+  el.style.left = left + 'px';
+
+  const cleanup = () => {
+    el.remove();
+    trigger.classList.remove('open');
+    activeDropdown = null;
+  };
+  activeDropdown = { el, cleanup };
+  setTimeout(() => document.addEventListener('click', cleanup, { once: true }), 0);
+}
+
+async function setStatus(event, seq, shot, field, value) {
+  if (event) event.stopPropagation();
+  closeDropdown();
+
+  const thisKey = `${seq}|${shot}`;
+  const applyTo = _selectedShots.size > 0 && _selectedShots.has(thisKey)
+    ? [..._selectedShots.values()]
+    : [{seq, shot}];
+
+  // Record undo
+  const undoEntries = applyTo.map(({seq: s, shot: sh}) => ({seq: s, shot: sh, field, prev: getStatus(s, sh, field), next: value}));
+  _pushUndo(undoEntries);
+
+  for (const {seq: s, shot: sh} of applyTo) {
+    const key = shotKey(s, sh);
+    if (!statusData[key]) statusData[key] = { ...STATUS_DEFAULTS };
+    statusData[key][field] = value;
+    _patchStatusDOM(s, sh, field, value);
+    await api('/api/status', { key, field, value }, 'POST');
+  }
+
+  const sortBy = document.getElementById('sortSelect')?.value || 'default';
+  if (sortBy !== 'default') applyFilters();
+}
+
+async function saveNote(seq, shot, value) {
+  const key = shotKey(seq, shot);
+  if (!statusData[key]) statusData[key] = { ...STATUS_DEFAULTS };
+  statusData[key].note = value;
+  await api('/api/status', { key, field: 'note', value }, 'POST');
+}
+
+// ── LIST LAUNCH DROPDOWN ──────────────────────────────
+function openListLaunchDropdown(event, seq, shotName) {
+  event.stopPropagation();
+  closeDropdown();
+
+  const seqData  = filteredData.find(s=>s.seq===seq);
+  const shotData = seqData?.shots.find(s=>s.shot===shotName);
+  if (!shotData) return;
+
+  // Sort all files newest-first by name, grouped by type
+  const blendFiles = shotData.files.filter(f=>fileTypeOf(f)==='blend').sort((a,b)=>b.name.localeCompare(a.name));
+  const nukeFiles  = shotData.files.filter(f=>fileTypeOf(f)==='nuke').sort((a,b)=>b.name.localeCompare(a.name));
+  const allSorted  = [...blendFiles, ...nukeFiles];
+
+  const trigger = event.currentTarget;
+  trigger.classList.add('open');
+  const rect = trigger.getBoundingClientRect();
+
+  const el = document.createElement('div');
+  el.className = 'versions-dropdown';
+  el.innerHTML = `
+    <div class="versions-dropdown-title" style="font-size:12px;color:var(--muted);padding:6px 10px 8px">Launch file — ${allSorted.length} available</div>
+    ${allSorted.map((f) => {
+      const ft = fileTypeOf(f);
+      const iconColor = ft==='nuke' ? 'var(--nuke)' : 'var(--amber)';
+      return `<button class="version-option" onclick="launch('${esc(f.path)}','${ft}');closeDropdown()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" style="flex-shrink:0"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+        <span class="version-option-name">${esc(f.name)}</span>
+        <span class="version-option-size">${(f.size_kb/1024).toFixed(1)} MB</span>
+      </button>`;
+    }).join('')}
+  `;
+
+  document.body.appendChild(el);
+
+  let top  = rect.bottom + 6;
+  let left = rect.left;
+  if (top + 320 > window.innerHeight) top = rect.top - Math.min(el.scrollHeight, 320) - 6;
+  if (left + 280 > window.innerWidth)  left = window.innerWidth - 288;
+  el.style.top  = top  + 'px';
+  el.style.left = left + 'px';
+
+  const cleanup = () => { el.remove(); trigger.classList.remove('open'); activeDropdown = null; };
+  activeDropdown = { el, cleanup };
+  setTimeout(() => document.addEventListener('click', cleanup, { once: true }), 0);
+}
+
+// ── LAUNCH ────────────────────────────────────────────
+async function launch(path, fileType) {
+  const res = await api('/api/launch', { path, file_type: fileType });
+  if (res.error) { toast(res.error, 'error'); if (res.error.includes('configured')) openSettings(); return; }
+  toast(`Launching ${res.launched}`, 'ok');
+}
+
+async function openFolder(path) {
+  await api('/api/open_folder', { path }, 'POST');
+}
+
+// ── SETTINGS ──────────────────────────────────────────
+function openSettings() {
+  api('/api/config').then(cfg => {
+    document.getElementById('blenderPath').value = cfg.blender_path||'';
+    document.getElementById('nukePath').value    = cfg.nuke_path||'';
+  });
+  document.getElementById('settingsOverlay').style.display = 'flex';
+}
+function closeSettings(e) {
+  if (!e || e.target===document.getElementById('settingsOverlay'))
+    document.getElementById('settingsOverlay').style.display = 'none';
+}
+async function browseBlender() { const r=await api('/api/browse_file'); if(r.path) document.getElementById('blenderPath').value=r.path; }
+async function browseNuke()    { const r=await api('/api/browse_file'); if(r.path) document.getElementById('nukePath').value=r.path; }
+async function saveSettings() {
+  await api('/api/config', { blender_path: document.getElementById('blenderPath').value.trim(), nuke_path: document.getElementById('nukePath').value.trim() }, 'POST');
+  toast('Settings saved', 'ok'); closeSettings();
+}
+
+// ── VIEW ──────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.getElementById('gridBtn').classList.toggle('active', v==='grid');
+  document.getElementById('listBtn').classList.toggle('active', v==='list');
+  renderAll(filteredData);
+}
+
+// compact mode is always on — no toggle needed
+
+// ── HELPERS ───────────────────────────────────────────
+function updateStats(data) {
+  document.getElementById('statSeq').textContent   = data.sequences.filter(s => s.seq.toLowerCase() !== 'common').length;
+  document.getElementById('statShots').textContent = data.total_shots;
+  document.getElementById('statFiles').textContent = data.total_files;
+  // Total size — sum all size_kb across all visible shots
+  let totalKb = 0;
+  data.sequences.forEach(seq => seq.shots.forEach(s => s.files.forEach(f => totalKb += f.size_kb)));
+  const totalMb = totalKb / 1024;
+  const sizeStr = totalMb >= 1024
+    ? (totalMb / 1024).toFixed(2) + ' GB'
+    : totalMb.toFixed(1) + ' MB';
+  document.getElementById('statSize').textContent = sizeStr;
+}
+function showScanning() { document.getElementById('content').innerHTML=`<div class="scanning"><div class="spin"></div><span>Scanning…</span></div>`; }
+function showWelcome()  { document.getElementById('toolbar').style.display='none'; document.getElementById('sidebar').style.display='none'; document.getElementById('content').innerHTML=welcomeHtml(_username); }
+function toast(msg, type='info') {
+  const el=document.createElement('div'); el.className='toast '+type; el.textContent=msg;
+  document.getElementById('toastArea').appendChild(el);
+  setTimeout(()=>el.remove(), type==='error'?5000:3000);
+}
+function esc(s) { return String(s).replace(/[&<>"'\\]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','\\':'\\\\'}[c])); }
+async function api(url,body,method) {
+  const opts={method:method||(body?'POST':'GET'),headers:{'Content-Type':'application/json'}};
+  if(body) opts.body=JSON.stringify(body);
+  return (await fetch(url,opts)).json();
+}
+
+// ── KEYBOARD ──────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (document.activeElement.tagName === 'INPUT') return;
+  if (e.key==='Escape') {
+    closeDropdown();
+    if (document.getElementById('generateOverlay').style.display !== 'none') {
+      document.getElementById('generateOverlay').style.display = 'none';
+      return;
+    }
+    closeSettings();
+    closeDashboard();
+    closeEasterEgg();
+  }
+  if ((e.metaKey||e.ctrlKey)&&e.key==='f') { e.preventDefault(); document.getElementById('searchInput')?.focus(); }
+  if (e.key==='Tab') { e.preventDefault(); closeDropdown(); setView(currentView==='grid'?'list':'grid'); }
+  if (e.key==='c') {
+    const anyOpen = document.querySelectorAll('.compact-card.compact-expanded').length > 0;
+    if (anyOpen) closeAllCompact(); else openAllCompact();
+  }
+  if (e.key==='1') setFilter('all');
+  if (e.key==='2') setFilter('blend');
+  if (e.key==='3') setFilter('nuke');
+  if (e.key==='4') setFilter('null');
+  if ((e.metaKey||e.ctrlKey)&&e.key==='r') { e.preventDefault(); rescan(); }
+  if (e.key==='d') openDashboard();
+  if ((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key==='Z') { e.preventDefault(); redoStatus(); }
+  else if ((e.metaKey||e.ctrlKey)&&e.key==='z') { e.preventDefault(); undoStatus(); }
+  if ((e.metaKey||e.ctrlKey)&&e.key==='a') { e.preventDefault(); selectAllShots(); }
+  if ((e.metaKey||e.ctrlKey)&&e.key===',') { e.preventDefault(); openSettings(); }
+});
+
+// ── SCROLL SPY ────────────────────────────────────────
+document.getElementById('content').addEventListener('scroll', () => {
+  const content=document.getElementById('content');
+  const groups=content.querySelectorAll('.seq-group');
+  let current=null;
+  for(const g of groups) if(g.offsetTop-content.offsetTop<=content.scrollTop+80) current=g.id.replace('seq_','');
+  if(current&&current!==activeSeq) { activeSeq=current; buildSidebar(); }
+});
+
+init();
+</script>
+</body>
+</html>
